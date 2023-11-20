@@ -44,6 +44,17 @@ function DietLogPage() {
         return;
       }
 
+      //We can change this with like add food name n pass in parameters n stuff n move it around to better place later
+      var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+      };
+      fetch("http://localhost:8080/test", requestOptions)
+        .then(response => response.text())
+        //should display some hello msg in ur console if it works correctly
+        .then(result => console.log(result))
+        .catch(error => console.log('error', error));
+
       // Check if a log for this meal type and date already exists (except for snacks)
       if (newLog.mealType !== 'snack') {
         const existingLog = logs.find(log => log.date === newLog.date && log.mealType === newLog.mealType);

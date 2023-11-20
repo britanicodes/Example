@@ -3,6 +3,7 @@ package com.hotel.Nutrition;
 
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +28,8 @@ public class NutritionController {
     }
     
     @GetMapping("/test")
+    //We wanna add this since client is in dif domain
+    @CrossOrigin(origins = "http://localhost:3000")
     public String test() {
         return "Hello, this is a test!";
     }
