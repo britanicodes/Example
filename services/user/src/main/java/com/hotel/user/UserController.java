@@ -49,31 +49,9 @@ public class UserController {
             """;
         return jdbcTemplate.query(query, new UserMapper());
     }
-    //Method being used my frontend which arahan made
-    @PostMapping("/user/AddNewUser")
-    public ResponseEntity<Object> addUser(@RequestParam String email, @RequestParam String password, @RequestParam String First_name, @RequestParam String last_name, @RequestParam int Age, 
-    @RequestParam String Sex, @RequestParam int weight, @RequestParam int height){
-
-       String specialCharacter = ".*[^a-z0-9 ].*";
-       String number = ".*[0-9].*";
-       String uppercase = ".*[A-Z].*";
-        if(password.length() < 8 || !password.matches(specialCharacter)
-           || !password.matches(number) || !password.matches(uppercase)){
-            //can return more info abt whats spefically wrong when refactor
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-      jdbcTemplate.update(
-    "INSERT INTO users.userInfo (email, password, firstName, lastName, age, sex, weight, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    email, password, First_name, last_name, Age, Sex, weight, height
-    );
-    return new ResponseEntity<>(HttpStatus.OK);
-    }
 
     @PostMapping("/user/addUser") //add user to db (need to add error handling   
     public ResponseEntity<Object> addUser(@RequestBody User user) {
-        String apiUrl = userServiceBaseURL + "user/" + user.getUserId();
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> responseEntity = restTemplate.getForEntity(apiUrl, String.class);
         
         //Validate some basic password criteria
         String password = user.getPassword();
@@ -82,8 +60,7 @@ public class UserController {
         String uppercase = ".*[A-Z].*";
         if(password.length() < 8 || !password.matches(specialCharacter)
            || !password.matches(number) || !password.matches(uppercase)){
-            //can return more info abt whats spefically wrong when refactor
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: weak password");
         }
         String query = """
             INSERT INTO `userInfo` (email, password, firstName, lastName, age, sex, weight, height)
@@ -91,10 +68,11 @@ public class UserController {
         """;
         jdbcTemplate.update(query, user.getEmail(), user.getPassword(), user.getFirstName(),user.getLastName(), user.getAge(), user.getSex(), user.getWeight(), user.getHeight());
 
-         return ResponseEntity.status(HttpStatus.OK).body(null);
+         return ResponseEntity.status(HttpStatus.OK).body("User " + user.getEmail() + "added. HTTP status: " + HttpStatus.OK);
     }
 
     //get user by email and return its info
+    //todo: edit to hide password
     @GetMapping("/user/email/{email}") 
     public List<User> userByEmail(@PathVariable String email) {
         String query = """
@@ -109,7 +87,7 @@ public class UserController {
     }
 
     //get user by id
-     //todo: edit to hide password
+    //todo: edit to hide password
     @GetMapping("/user/id/{id}") 
     public List<User> userById(@PathVariable String id) {
         String query = """
@@ -139,7 +117,7 @@ public class UserController {
     //-----------------------------------------------//
     //----------------foodlog methods----------------//
     //-----------------------------------------------//
-   @PostMapping("/user/AddEntry") //only works if user exists
+   @PostMapping("/user/addSingleEntry") //only works if user exists
    public ResponseEntity<Object> addEntry(@RequestBody FoodLog foodLog) {
         String apiUrl = nutritionServiceBaseURL + "food/" + foodLog.getFoodName();
 
