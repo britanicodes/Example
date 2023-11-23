@@ -8,6 +8,8 @@ function DietLogPage() {
     mealType: '',
     ingredients: [{ name: '', quantity: '' }]
   });
+
+    
   const [searchDate, setSearchDate] = useState('');
 
   const navigate = useNavigate();
@@ -39,32 +41,58 @@ function DietLogPage() {
   };
 
   const addLog = () => {
-      if (!newLog.date || !newLog.mealType || newLog.ingredients.some(ingredient => !ingredient.name || !ingredient.quantity)) {
-        alert('Please enter date, meal type, and at least one ingredient with quantity.');
+    if (!newLog.date || !newLog.mealType || newLog.ingredients.some(ingredient => !ingredient.name || !ingredient.quantity)) {
+      alert('Please enter date, meal type, and at least one ingredient with quantity.');
+      return;
+    }
+  
+    if (newLog.mealType !== 'snack') {
+      const existingLog = logs.find(log => log.date === newLog.date && log.mealType === newLog.mealType);
+      if (existingLog) {
+        alert(`A log for ${newLog.mealType} on this date already exists.`);
         return;
       }
-
-      // Check if a log for this meal type and date already exists (except for snacks)
-      if (newLog.mealType !== 'snack') {
-        const existingLog = logs.find(log => log.date === newLog.date && log.mealType === newLog.mealType);
-        if (existingLog) {
-          alert(`A log for ${newLog.mealType} on this date already exists.`);
-          return;
-        }
-      }
-
-    //place holder function for query for database nutrition
-    const logWithNutrition = {
-      ...newLog,
-      ingredients: newLog.ingredients.map(ingredient => ({
-        ...ingredient,
-        nutrition: placeholderNutrition
-      }))
+    }
+  
+    const firstIngredient = newLog.ingredients[0];
+    const email = window.emailGlobalVar;
+    const food = encodeURIComponent(firstIngredient.name);
+    const quantity = firstIngredient.quantity;
+    const mealType = encodeURIComponent(newLog.mealType);
+    const date = encodeURIComponent(newLog.date);
+  
+    const url = `http://localhost:8081/get-nutrition?email=${email}&food=${food}&quantity=${quantity}&mealType=${mealType}&date=${date}`;
+  
+    var requestOptions = {
+      method: 'POST',
+      redirect: 'follow'
     };
+  
+    fetch(url, requestOptions)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    // Check if the headers object exists and if 'Content-Type' header is present
+    let contentType = response.headers && response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return response.json(); // This will parse the response as JSON
+    } else {
+      return response.text(); // If there's no content-type, fallback to text
+    }
+  })
+  .then(data => {
+    // Handle data processing here
+    // ...
+  })
+  .catch(error => {
+    console.error('Fetch error:', error);
+    alert('Failed to fetch nutrition data. Please try again.');
+  });
 
-    setLogs([...logs, logWithNutrition]);
-    setNewLog({ date: '', mealType: '', ingredients: [{ name: '', quantity: '' }] });
   };
+  
+  
 
   const deleteLog = (index) => {
     const updatedLogs = logs.filter((_, logIndex) => logIndex !== index);
@@ -84,9 +112,14 @@ function DietLogPage() {
     fats: 8        // Placeholder value
   };
 
+
+
+  
+
   return (
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', height: '100vh', padding: '20px' }}>
       <button onClick={goBack} style={{ position: 'absolute', top: '20px', left: '20px', padding: '10px 20px', backgroundColor: 'lightgray', borderRadius: '20px' }}>Back</button>
+      
       {/* Log Entry Column */}
       <div style={{ width: '40%', marginRight: '20px', padding: '20px', borderRadius: '10px', boxShadow: '0px 0px 10px #ccc', textAlign: 'center' }}>
         <h2 style={{ color: '#333' }}>Add Diet Log</h2>
@@ -138,6 +171,9 @@ function DietLogPage() {
           ))}
           <button onClick={addIngredientField} style={{ backgroundColor: 'blue', color: 'white', borderRadius: '20px', padding: '10px 20px', border: 'none' }}>Add Ingredient</button>
           <button onClick={addLog} style={{ backgroundColor: 'green', color: 'white', borderRadius: '20px', padding: '10px 20px', border: 'none' }}>Log Diet</button>
+          
+          
+          
         </form>
       </div>
 

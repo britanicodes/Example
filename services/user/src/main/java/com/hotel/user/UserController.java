@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -141,39 +142,18 @@ public class UserController {
     //-----------------------------------------------//
     //----------------foodlog methods----------------//
     //-----------------------------------------------//
-   @PostMapping("/user/AddEntry") //only works if user exists
-   public ResponseEntity<Object> addEntry(@RequestBody FoodLog foodLog) {
-        String apiUrl = nutritionServiceBaseURL + "food/" + foodLog.getFoodName();
+    @PostMapping("/user/AddEntry") //only works if user exists
+   public void addIngredientEntry(@RequestBody FoodLog foodlog)                                              
+    {
+        String SQL = "INSERT INTO users.foodLogs (email, dateAdded, servings, calories, protein, carbs, fat, mealType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(SQL, foodlog.getEmail(), foodlog.getDate(), foodlog.getServings(), foodlog.getCalories(), foodlog.getProtein(), foodlog.getCarbs(), foodlog.getFat(), foodlog.getMealType());
+    }
 
-        // Create an instance of RestTemplate
-        RestTemplate restTemplate = new RestTemplate();
-
-        // Make the GET request and receive the response
-        ResponseEntity<String> responseEntity = restTemplate.getForEntity(apiUrl, String.class);
-
-        if(responseEntity.getBody() == null || responseEntity.getBody().isEmpty() || responseEntity.getBody().equals("[]")){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Food not found");
-        }
-        
-        try {
-            int[] nutritionInfo = parseNutritionInfo(responseEntity.getBody());
-            int calories = nutritionInfo[0] * foodLog.getServings();
-            int protein = nutritionInfo[1] * foodLog.getServings();
-            int carbs = nutritionInfo[2] * foodLog.getServings();
-            int fat = nutritionInfo[3] * foodLog.getServings();
-            Instant date = Instant.now();
-
-            String query = """
-                INSERT INTO `foodLogs` (email, foodName, dateAdded, servings, calories, protein, carbs, fat)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """;
-
-            jdbcTemplate.update(query, foodLog.getEmail(), foodLog.getFoodName(), date, foodLog.getServings(), calories, protein, carbs, fat);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error parsing JSON: " + e.getMessage());
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(null);
+    @GetMapping("/confirm-user")
+    public int confirmLogin(@RequestParam String email, @RequestParam String password) {
+    String SQL = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS IsMatch FROM users.userInfo WHERE email = ? AND password = ?";
+    int isMatch = jdbcTemplate.queryForObject(SQL, new Object[]{email, password}, Integer.class);
+    return isMatch;
     }
 
     public static int[] parseNutritionInfo(String jsonString) throws Exception {
@@ -193,7 +173,28 @@ public class UserController {
             throw new IllegalArgumentException("Invalid JSON format");
         }
     }
-
+    
+    @PostMapping("/get-nutrition")
+    public void getNutritionValues(@RequestParam String email, @RequestParam String food, @RequestParam int quantity, @RequestParam String mealType, @RequestParam String date) {
+        FoodLog foodlog = new FoodLog();
+        String SQLCalories = "SELECT `calories` FROM cnf.sampleFoods WHERE `name` = ?";
+        int caloriecount = (jdbcTemplate.queryForObject(SQLCalories, new Object[]{food}, Integer.class))*(quantity/100);
+        String SQLProtein = "SELECT `protein` FROM cnf.sampleFoods WHERE `name` = ?";
+        int proteincount = jdbcTemplate.queryForObject(SQLProtein, new Object[]{food}, Integer.class)*(quantity/100);
+        String SQLCarbs = "SELECT `carbs` FROM cnf.sampleFoods WHERE `name` = ?";
+        int carbcount = jdbcTemplate.queryForObject(SQLCarbs, new Object[]{food}, Integer.class)*(quantity/100);
+        String SQLfat = "SELECT `fat` FROM cnf.sampleFoods WHERE `name` = ?";
+        int fatcount = jdbcTemplate.queryForObject(SQLfat, new Object[]{food}, Integer.class)*(quantity/100);
+        foodlog.setCalories(caloriecount);
+        foodlog.setProtein(proteincount);
+        foodlog.setCarbs(carbcount);
+        foodlog.setFat(fatcount);
+        foodlog.setServings(quantity);
+        foodlog.setEmail(email);
+        foodlog.setDate(date);
+        foodlog.setMealType(mealType);
+        addIngredientEntry(foodlog);
+    }
     //delete food log entry
 
     //update food log entry

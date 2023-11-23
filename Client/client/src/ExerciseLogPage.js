@@ -17,7 +17,7 @@ function ExerciseLogPage() {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate(-1);
+    navigate('/options');
   };
 
   const handleInputChange = (e) => {
@@ -61,7 +61,9 @@ function ExerciseLogPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', height: '100vh', padding: '20px' }}>
-      <button onClick={goBack} style={{ position: 'absolute', top: '20px', left: '20px', padding: '10px 20px', backgroundColor: 'lightgray', borderRadius: '20px' }}>Back</button>
+      <button className="btn btn-outline-primary" onClick={goBack}>
+            Back
+          </button>
 
       {/* Exercise Log Entry Column */}
       <div style={{ width: '40%', marginRight: '20px', padding: '20px', borderRadius: '10px', boxShadow: '0px 0px 10px #ccc', textAlign: 'center' }}>

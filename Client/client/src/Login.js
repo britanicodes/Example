@@ -19,7 +19,7 @@ function Login() {
     };
 
     // Construct the URL with the user-entered email and password
-    const url = `http://localhost:3005/confirm-user?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+    const url = `http://localhost:8081/confirm-user?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
     // Perform the fetch request
     fetch(url, requestOptions)

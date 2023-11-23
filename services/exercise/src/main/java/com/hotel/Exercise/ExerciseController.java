@@ -121,12 +121,7 @@ class ExerciseController {
       return jdbcTemplate.queryForList(SQL);
     }
 
-    @GetMapping("/confirm-user")
-    public int confirmLogin(@RequestParam String email, @RequestParam String password) {
-    String SQL = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS IsMatch FROM users.userInfo WHERE email = ? AND password = ?";
-    int isMatch = jdbcTemplate.queryForObject(SQL, new Object[]{email, password}, Integer.class);
-    return isMatch;
-}
+    
 
 
     

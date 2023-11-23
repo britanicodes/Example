@@ -12,16 +12,12 @@ import jakarta.persistence.Table;
     public class FoodLog {
         
         @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
-        @Column(name = "foodLogID")
-        private long foodLogID;
+        
 
         @Column(name = "email")
         private String email;
 
-         @Column(name = "foodName")
-        private String foodName;
-
-        @Column(name = "dateAdded")
+        @Column(name = "date")
         private String date;    
 
         @Column(name = "servings")
@@ -38,6 +34,9 @@ import jakarta.persistence.Table;
 
         @Column(name = "fat")
         private int fat;
+
+        @Column(name = "mealType")
+        private String mealType; 
         
 
     public FoodLog() {
@@ -45,17 +44,17 @@ import jakarta.persistence.Table;
     }
 
     public FoodLog(long foodLogID, String email, String date, String foodName, int servings) {
-        this.foodLogID = foodLogID;
+        // this.foodLogID = foodLogID;
         this.email = email;
         this.date = date;
-        this.foodName = foodName;
+        // this.foodName = foodName;
         this.servings = servings;
     }
 
     // Setters
-    public void setFoodLogID(long foodLogID){
-        this.foodLogID = foodLogID;
-    }
+    // public void setFoodLogID(long foodLogID){
+    //     this.foodLogID = foodLogID;
+    // }
 
     public void setEmail(String email){
         this.email = email;
@@ -65,9 +64,13 @@ import jakarta.persistence.Table;
         this.date = date;
     }
 
-    public void setFoodName(String foodName){
-        this.foodName = foodName;
+    public void setMealType(String mealType) {
+        this.mealType = mealType;
     }
+
+    // public void setFoodName(String foodName){
+    //     this.foodName = foodName;
+    // }
 
     public void setServings(int servings){
         this.servings = servings;
@@ -91,8 +94,12 @@ import jakarta.persistence.Table;
 
 
     // Getters
-    public long getFoodLogID(){
-        return foodLogID;
+    // public long getFoodLogID(){
+    //     return foodLogID;
+    // }
+
+    public String getMealType() {
+        return this.mealType;
     }
 
     public String getEmail(){
@@ -103,9 +110,9 @@ import jakarta.persistence.Table;
         return date;
     }
 
-    public String getFoodName(){
-        return foodName;
-    }
+    // public String getFoodName(){
+    //     return foodName;
+    // }
 
     public int getServings(){
         return servings;
@@ -130,10 +137,10 @@ import jakarta.persistence.Table;
     @Override
     public String toString() {
         return "FoodLog{" +
-                "foodLogID=" + foodLogID +
+                // "foodLogID=" + foodLogID +
                 "email='" + email + '\'' +
                 ", date='" + date + '\'' +
-                ", foodName='" + foodName + '\'' +
+                // ", foodName='" + foodName + '\'' +
                 ", servings=" + servings +
                 ", calories=" + calories +
                 ", protein=" + protein +
