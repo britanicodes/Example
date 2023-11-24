@@ -1,5 +1,7 @@
 package com.hotel.user;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import org.springframework.jdbc.core.RowMapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 @RestController
 public class UserController {
@@ -145,8 +153,8 @@ public class UserController {
     @PostMapping("/user/AddEntry") //only works if user exists
    public void addIngredientEntry(@RequestBody FoodLog foodlog)                                              
     {
-        String SQL = "INSERT INTO users.foodLogs (email, dateAdded, servings, calories, protein, carbs, fat, mealType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(SQL, foodlog.getEmail(), foodlog.getDate(), foodlog.getServings(), foodlog.getCalories(), foodlog.getProtein(), foodlog.getCarbs(), foodlog.getFat(), foodlog.getMealType());
+        String SQL = "INSERT INTO users.foodLogs (email, foodName, dateAdded, servings, calories, protein, carbs, fat, mealType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(SQL, foodlog.getEmail(), foodlog.getFoodName(), foodlog.getDate(), foodlog.getServings(), foodlog.getCalories(), foodlog.getProtein(), foodlog.getCarbs(), foodlog.getFat(), foodlog.getMealType());
     }
 
     @GetMapping("/confirm-user")
@@ -186,6 +194,7 @@ public class UserController {
         String SQLfat = "SELECT `fat` FROM cnf.sampleFoods WHERE `name` = ?";
         int fatcount = jdbcTemplate.queryForObject(SQLfat, new Object[]{food}, Integer.class)*(quantity/100);
         foodlog.setCalories(caloriecount);
+        foodlog.setFoodName(food);
         foodlog.setProtein(proteincount);
         foodlog.setCarbs(carbcount);
         foodlog.setFat(fatcount);
@@ -194,6 +203,44 @@ public class UserController {
         foodlog.setDate(date);
         foodlog.setMealType(mealType);
         addIngredientEntry(foodlog);
+    }
+
+    @GetMapping("check-multiple-mealtype")
+    public int checkMultipleMeals(@RequestParam String email, @RequestParam String date, @RequestParam String mealType) {
+        String SQL = "SELECT CASE \n" + //
+                "         WHEN EXISTS(SELECT 1 \n" + //
+                "                     FROM users.foodLogs \n" + //
+                "                     WHERE email = ? \n" + //
+                "                     AND dateAdded = ? \n" + //
+                "                     AND mealType != 'snack'\n" + //
+                "                     AND mealType = ?) \n" + //
+                "         THEN 1 \n" + //
+                "         ELSE 0 \n" + //
+                "       END AS MealExists;\n" + //
+                "";
+        int check = jdbcTemplate.queryForObject(SQL, new Object[]{email, date, mealType}, Integer.class);
+        return check;
+    }
+
+    @GetMapping("pull-diet-log") 
+    public List<FoodLog> pullPreviousLogs(@RequestParam String email) {
+        String SQL = "SELECT * FROM users.foodLogs WHERE email = ?";
+        return jdbcTemplate.query(SQL, new Object[]{email}, new RowMapper<FoodLog>() {
+            @Override
+            public FoodLog mapRow(ResultSet rs, int rowNum) throws SQLException {
+                FoodLog log = new FoodLog();
+                log.setFoodName(rs.getString("foodName"));
+                log.setEmail(rs.getString("email"));
+                log.setDate(rs.getString("dateAdded"));
+                log.setServings(rs.getInt("servings"));
+                log.setCalories(rs.getInt("calories"));
+                log.setProtein(rs.getInt("protein"));
+                log.setCarbs(rs.getInt("carbs"));
+                log.setFat(rs.getInt("fat"));
+                log.setMealType(rs.getString("mealType"));
+                return log;
+            }
+        });
     }
     //delete food log entry
 

@@ -13,6 +13,8 @@ import jakarta.persistence.Table;
         
         @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
         
+        @Column(name = "foodName")
+        private String foodName;
 
         @Column(name = "email")
         private String email;
@@ -56,6 +58,10 @@ import jakarta.persistence.Table;
     //     this.foodLogID = foodLogID;
     // }
 
+    public void setFoodName(String foodName) {
+        this.foodName = foodName;
+    }
+
     public void setEmail(String email){
         this.email = email;
     }
@@ -98,6 +104,10 @@ import jakarta.persistence.Table;
     //     return foodLogID;
     // }
 
+    public String getFoodName() {
+        return this.foodName;
+    }    
+    
     public String getMealType() {
         return this.mealType;
     }
