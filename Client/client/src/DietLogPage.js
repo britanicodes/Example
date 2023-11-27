@@ -118,7 +118,7 @@ function DietLogPage() {
   };
 
   const fetchLogs = () => {
-    const email = window.emailGlobalVar; // You should replace this with your actual method of getting the user's email
+    const email = window.emailGlobalVar;
     const requestOptions = {
       method: 'GET',
       redirect: 'follow'

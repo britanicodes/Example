@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 public class UserController {
 
-    
+
     private final JdbcTemplate jdbcTemplate;
     private final UserRepository userRepository;
     private String nutritionServiceBaseURL = "http://localhost:8080/";
@@ -39,7 +39,7 @@ public class UserController {
 
     WebClient exercise = WebClient.create(exerciseServiceBaseURL);
 
-    UserController(UserRepository userRepository, JdbcTemplate jdbcTemplate){
+    UserController(UserRepository userRepository, JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -55,29 +55,30 @@ public class UserController {
     @GetMapping("/getAllUsers") //get all users in db
     public List<User> user() {
         String query = """
-                SELECT *
-                FROM `userInfo`
-            """;
+                    SELECT *
+                    FROM `userInfo`
+                """;
         return jdbcTemplate.query(query, new UserMapper());
     }
+
     //Method being used my frontend which arahan made
     @PostMapping("/user/AddNewUser")
-    public ResponseEntity<Object> addUser(@RequestParam String email, @RequestParam String password, @RequestParam String First_name, @RequestParam String last_name, @RequestParam int Age, 
-    @RequestParam String Sex, @RequestParam int weight, @RequestParam int height){
+    public ResponseEntity<Object> addUser(@RequestParam String email, @RequestParam String password, @RequestParam String First_name, @RequestParam String last_name, @RequestParam int Age,
+                                          @RequestParam String Sex, @RequestParam int weight, @RequestParam int height) {
 
-       String specialCharacter = ".*[^a-z0-9 ].*";
-       String number = ".*[0-9].*";
-       String uppercase = ".*[A-Z].*";
-        if(password.length() < 8 || !password.matches(specialCharacter)
-           || !password.matches(number) || !password.matches(uppercase)){
+        String specialCharacter = ".*[^a-z0-9 ].*";
+        String number = ".*[0-9].*";
+        String uppercase = ".*[A-Z].*";
+        if (password.length() < 8 || !password.matches(specialCharacter)
+                || !password.matches(number) || !password.matches(uppercase)) {
             //can return more info abt whats spefically wrong when refactor
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-      jdbcTemplate.update(
-    "INSERT INTO users.userInfo (email, password, firstName, lastName, age, sex, weight, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    email, password, First_name, last_name, Age, Sex, weight, height
-    );
-    return new ResponseEntity<>(HttpStatus.OK);
+        jdbcTemplate.update(
+                "INSERT INTO users.userInfo (email, password, firstName, lastName, age, sex, weight, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                email, password, First_name, last_name, Age, Sex, weight, height
+        );
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping("/user/addUser") //add user to db (need to add error handling   
@@ -85,34 +86,34 @@ public class UserController {
         String apiUrl = userServiceBaseURL + "user/" + user.getUserId();
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> responseEntity = restTemplate.getForEntity(apiUrl, String.class);
-        
+
         //Validate some basic password criteria
         String password = user.getPassword();
         String specialCharacter = ".*[^a-z0-9 ].*";
         String number = ".*[0-9].*";
         String uppercase = ".*[A-Z].*";
-        if(password.length() < 8 || !password.matches(specialCharacter)
-           || !password.matches(number) || !password.matches(uppercase)){
+        if (password.length() < 8 || !password.matches(specialCharacter)
+                || !password.matches(number) || !password.matches(uppercase)) {
             //can return more info abt whats spefically wrong when refactor
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
         String query = """
-            INSERT INTO `userInfo` (email, password, firstName, lastName, age, sex, weight, height)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-        jdbcTemplate.update(query, user.getEmail(), user.getPassword(), user.getFirstName(),user.getLastName(), user.getAge(), user.getSex(), user.getWeight(), user.getHeight());
+                    INSERT INTO `userInfo` (email, password, firstName, lastName, age, sex, weight, height)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+        jdbcTemplate.update(query, user.getEmail(), user.getPassword(), user.getFirstName(), user.getLastName(), user.getAge(), user.getSex(), user.getWeight(), user.getHeight());
 
-         return ResponseEntity.status(HttpStatus.OK).body(null);
+        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
     //get user by email and return its info
-    @GetMapping("/user/email/{email}") 
+    @GetMapping("/user/email/{email}")
     public List<User> userByEmail(@PathVariable String email) {
         String query = """
-            SELECT *
-            FROM `userInfo`
-            WHERE email LIKE '%%%s%%'
-        """;
+                    SELECT *
+                    FROM `userInfo`
+                    WHERE email LIKE '%%%s%%'
+                """;
         String SQL = String.format(query, email);
 
         List<User> temp = jdbcTemplate.query(SQL, new UserMapper());
@@ -120,14 +121,14 @@ public class UserController {
     }
 
     //get user by id
-     //todo: edit to hide password
-    @GetMapping("/user/id/{id}") 
+    //todo: edit to hide password
+    @GetMapping("/user/id/{id}")
     public List<User> userById(@PathVariable String id) {
         String query = """
-            SELECT *
-            FROM `userInfo`
-            WHERE userId LIKE '%%%s%%'
-        """;
+                    SELECT *
+                    FROM `userInfo`
+                    WHERE userId LIKE '%%%s%%'
+                """;
         String SQL = String.format(query, id);
 
         List<User> temp = jdbcTemplate.query(SQL, new UserMapper());
@@ -138,73 +139,73 @@ public class UserController {
     @DeleteMapping("/user/deleteUser/{email}")
     public ResponseEntity<Object> deleteUser(@RequestBody User user) {
         String query = """
-            DELETE FROM `userInfo`
-            WHERE email = ?
-        """;
+                    DELETE FROM `userInfo`
+                    WHERE email = ?
+                """;
         jdbcTemplate.update(query, user.getEmail());
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
-    @GetMapping("/user/weightLoss/{email}/{days}") 
-    public Integer predictWeightLoss(@PathVariable String email, @PathVariable int days) {  
-      //Gets average calories burnt from exercise service
-      Mono<Integer> caloriesLost = exercise.get()
-      .uri("AverageCaloriesBurnt?email="+email+"&days="+days)
-      .retrieve()
-      .bodyToMono(Integer.class);
-     //Gets average calories consumed 
-      String SQL = "SELECT calories FROM users.foodLogs WHERE email = "+"'"+email+"'"+" ORDER BY dateAdded DESC";
-      List<Integer> temp = jdbcTemplate.queryForList(SQL, Integer.class);
-      int total = 0;
-      for(int i = 0; i < temp.size(); i++){
-        total+=temp.get(i);
-      }
-      int caloriesGained = total/days;
-      //Does some calculation to find how much calories a user lost
-      int cLost = caloriesLost.block();
-      if(caloriesGained > cLost){
-        return -1;
-      } 
-      int difference = Math.abs((caloriesGained - cLost)) * days;
-      return difference * days;
+    @GetMapping("/user/weightLoss/{email}/{days}")
+    public Integer predictWeightLoss(@PathVariable String email, @PathVariable int days) {
+        //Gets average calories burnt from exercise service
+        Mono<Integer> caloriesLost = exercise.get()
+                .uri("AverageCaloriesBurnt?email=" + email + "&days=" + days)
+                .retrieve()
+                .bodyToMono(Integer.class);
+        //Gets average calories consumed
+        String SQL = "SELECT calories FROM users.foodLogs WHERE email = " + "'" + email + "'" + " ORDER BY dateAdded DESC";
+        List<Integer> temp = jdbcTemplate.queryForList(SQL, Integer.class);
+        int total = 0;
+        for (int i = 0; i < temp.size(); i++) {
+            total += temp.get(i);
+        }
+        int caloriesGained = total / days;
+        //Does some calculation to find how much calories a user lost
+        int cLost = caloriesLost.block();
+        if (caloriesGained > cLost) {
+            return -1;
+        }
+        int difference = Math.abs((caloriesGained - cLost)) * days;
+        return difference * days;
     }
 
     @PostMapping("/user/AddEntry") // only works if user exists
-public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
-    // Assuming all FoodLog objects have the same email, date, and mealType
-    FoodLog foodLogFinal = new FoodLog();
-    foodLogFinal.setEmail(foodLogs.get(0).getEmail());
-    foodLogFinal.setDate(foodLogs.get(0).getDate());
-    foodLogFinal.setMealType(foodLogs.get(0).getMealType());
+    public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
+        // Assuming all FoodLog objects have the same email, date, and mealType
+        FoodLog foodLogFinal = new FoodLog();
+        foodLogFinal.setEmail(foodLogs.get(0).getEmail());
+        foodLogFinal.setDate(foodLogs.get(0).getDate());
+        foodLogFinal.setMealType(foodLogs.get(0).getMealType());
 
-    // Initialize sums
-    int totalServings = 0;
-    int totalCalories = 0;
-    int totalProtein = 0;
-    int totalCarbs = 0;
-    int totalFat = 0;
-    StringBuilder foodNames = new StringBuilder();
+        // Initialize sums
+        int totalServings = 0;
+        int totalCalories = 0;
+        int totalProtein = 0;
+        int totalCarbs = 0;
+        int totalFat = 0;
+        StringBuilder foodNames = new StringBuilder();
 
-    // Aggregate values from all FoodLog entries
-    for (FoodLog log : foodLogs) {
-        totalServings += log.getServings();
-        totalCalories += log.getCalories();
-        totalProtein += log.getProtein();
-        totalCarbs += log.getCarbs();
-        totalFat += log.getFat();
-        if (foodNames.length() > 0) {
-            foodNames.append(", ");
+        // Aggregate values from all FoodLog entries
+        for (FoodLog log : foodLogs) {
+            totalServings += log.getServings();
+            totalCalories += log.getCalories();
+            totalProtein += log.getProtein();
+            totalCarbs += log.getCarbs();
+            totalFat += log.getFat();
+            if (foodNames.length() > 0) {
+                foodNames.append(", ");
+            }
+            foodNames.append(log.getFoodName());
         }
-        foodNames.append(log.getFoodName());
-    }
 
-    // Set aggregated values
-    foodLogFinal.setFoodName(foodNames.toString());
-    foodLogFinal.setServings(totalServings);
-    foodLogFinal.setCalories(totalCalories);
-    foodLogFinal.setProtein(totalProtein);
-    foodLogFinal.setCarbs(totalCarbs);
-    foodLogFinal.setFat(totalFat);
+        // Set aggregated values
+        foodLogFinal.setFoodName(foodNames.toString());
+        foodLogFinal.setServings(totalServings);
+        foodLogFinal.setCalories(totalCalories);
+        foodLogFinal.setProtein(totalProtein);
+        foodLogFinal.setCarbs(totalCarbs);
+        foodLogFinal.setFat(totalFat);
 
         String SQL = "INSERT INTO users.foodLogs (email, foodName, dateAdded, servings, calories, protein, carbs, fat, mealType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(SQL, foodLogFinal.getEmail(), foodLogFinal.getFoodName(), foodLogFinal.getDate(), foodLogFinal.getServings(), foodLogFinal.getCalories(), foodLogFinal.getProtein(), foodLogFinal.getCarbs(), foodLogFinal.getFat(), foodLogFinal.getMealType());
@@ -212,13 +213,13 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
 
     @GetMapping("/confirm-user")
     public int confirmLogin(@RequestParam String email, @RequestParam String password) {
-    String SQL = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS IsMatch FROM users.userInfo WHERE email = ? AND password = ?";
-    int isMatch = jdbcTemplate.queryForObject(SQL, new Object[]{email, password}, Integer.class);
-    return isMatch;
+        String SQL = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS IsMatch FROM users.userInfo WHERE email = ? AND password = ?";
+        int isMatch = jdbcTemplate.queryForObject(SQL, new Object[]{email, password}, Integer.class);
+        return isMatch;
     }
 
-    
-    @GetMapping("pull-diet-log") 
+
+    @GetMapping("pull-diet-log")
     public List<FoodLog> pullPreviousLogs(@RequestParam String email) {
         String SQL = "SELECT * FROM users.foodLogs WHERE email = ?";
         return jdbcTemplate.query(SQL, new Object[]{email}, new RowMapper<FoodLog>() {
@@ -244,14 +245,14 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
         FoodLog foodlog = new FoodLog();
         System.out.println("NUMBER: " + quantity);
         String SQLCalories = "SELECT `calories` FROM cnf.sampleFoods WHERE `name` = ?";
-        int calorieCount = (int)(jdbcTemplate.queryForObject(SQLCalories, new Object[]{food}, Integer.class) * ((double)quantity / 100));
+        int calorieCount = (int) (jdbcTemplate.queryForObject(SQLCalories, new Object[]{food}, Integer.class) * ((double) quantity / 100));
         System.out.println("NUMBER: " + calorieCount);
         String SQLProtein = "SELECT `protein` FROM cnf.sampleFoods WHERE `name` = ?";
-        int proteincount = (int)(jdbcTemplate.queryForObject(SQLProtein, new Object[]{food}, Integer.class) * ((double)quantity / 100));
+        int proteincount = (int) (jdbcTemplate.queryForObject(SQLProtein, new Object[]{food}, Integer.class) * ((double) quantity / 100));
         String SQLCarbs = "SELECT `carbs` FROM cnf.sampleFoods WHERE `name` = ?";
-        int carbcount = (int)(jdbcTemplate.queryForObject(SQLCarbs, new Object[]{food}, Integer.class) * ((double)quantity / 100));
+        int carbcount = (int) (jdbcTemplate.queryForObject(SQLCarbs, new Object[]{food}, Integer.class) * ((double) quantity / 100));
         String SQLfat = "SELECT `fat` FROM cnf.sampleFoods WHERE `name` = ?";
-        int fatcount = (int)(jdbcTemplate.queryForObject(SQLfat, new Object[]{food}, Integer.class) * ((double)quantity / 100));
+        int fatcount = (int) (jdbcTemplate.queryForObject(SQLfat, new Object[]{food}, Integer.class) * ((double) quantity / 100));
         foodlog.setCalories(calorieCount);
         foodlog.setFoodName(food);
         foodlog.setProtein(proteincount);
@@ -260,7 +261,7 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
         foodlog.setServings(quantity);
         foodlog.setEmail(email);
         foodlog.setDate(date);
-        foodlog.setMealType(mealType);       
+        foodlog.setMealType(mealType);
         return foodlog;
     }
 
@@ -284,13 +285,12 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
     @GetMapping("/visualize-top-5")
     public List<Map<String, Object>> visualizeTop5Nutrients(@RequestParam String email, @RequestParam String startDate, @RequestParam String endDate) {
         String SQL = "SELECT SUM(protein) AS total_protein, SUM(carbs) AS total_carbs, SUM(fat) AS total_fat, SUM(calories) AS total_kcal FROM users.foodLogs WHERE email = '" + email + "' AND dateAdded BETWEEN '" + startDate + "' AND '" + endDate + "'";
-      return jdbcTemplate.queryForList(SQL);
+        return jdbcTemplate.queryForList(SQL);
     }
 
-    
 
     //todo: update user by email and password verification 
-    
+
     //-----------------------------------------------//
     //----------------foodlog methods----------------//
     //-----------------------------------------------//
@@ -307,7 +307,7 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
 //         if(responseEntity.getBody() == null || responseEntity.getBody().isEmpty() || responseEntity.getBody().equals("[]")){
 //             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Food not found");
 //         }
-        
+
 //         try {
 //             int[] nutritionInfo = parseNutritionInfo(responseEntity.getBody());
 //             int calories = nutritionInfo[0] * foodLog.getServings();
@@ -354,7 +354,7 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
     //get food log entries by email
 
     // get food log entries by date 
-    
+
     // get food log entries by date range
 
     // get food log entries by food name
@@ -365,7 +365,6 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
     //---------------------------------------------------//
 
 
-    
     //add exercise log entry
 
     //delete exercise log entry
@@ -380,8 +379,27 @@ public void addIngredientEntry(@RequestBody List<FoodLog> foodLogs) {
 
     // get exercise log entries by exercise name
 
-    
+    // ... [Previous UserController code] ...
 
+//---------------------------------------------------//
+//----------------exerciselog methods----------------//
+//---------------------------------------------------//
 
-
+    @GetMapping("/pull-exercise-log")
+    public List<ExerciseLog> pullExerciseLogs(@RequestParam String email) {
+        String SQL = "SELECT * FROM exercise.exercise_log WHERE email = ?";
+        return jdbcTemplate.query(SQL, new Object[]{email}, new RowMapper<ExerciseLog>() {
+            @Override
+            public ExerciseLog mapRow(ResultSet rs, int rowNum) throws SQLException {
+                ExerciseLog log = new ExerciseLog();
+                log.setEmail(rs.getString("email"));
+                log.setDate(rs.getDate("date").toString()); // Ensure this matches your ExerciseLog class date field type
+                log.setDuration(rs.getInt("length"));
+                log.setExerciseType(rs.getString("type"));
+                log.setIntensity(rs.getString("intensity"));
+                log.setCaloriesBurned(rs.getInt("caloriesBurnt"));
+                return log;
+            }
+        });
+    }
 }

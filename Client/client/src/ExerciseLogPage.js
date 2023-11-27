@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const BMR = 1500; // Replace with real calculation
@@ -15,6 +15,11 @@ function ExerciseLogPage() {
   const [searchDate, setSearchDate] = useState('');
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+      fetchExerciseLogs();
+    }, []);
+
 
   const goBack = () => {
     navigate(-1);
@@ -58,6 +63,16 @@ function ExerciseLogPage() {
   const getFilteredLogs = () => {
     return searchDate ? logs.filter(log => log.date === searchDate) : logs;
   };
+  const fetchExerciseLogs = () => {
+      // Fetch exercise logs for the current user
+      const email = window.emailGlobalVar; // Replace with actual email retrieval logic
+      fetch(`http://localhost:8081/pull-exercise-log?email=${encodeURIComponent(email)}`)
+        .then(response => response.json())
+        .then(data => {
+          setLogs(data);
+        })
+        .catch(error => console.error('Error fetching exercise logs:', error));
+    };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', height: '100vh', padding: '20px' }}>
