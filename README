@@ -6,12 +6,4 @@
 
 3. cd -
 
-Go to Services/Exercise   <----- Probably can get rid of this
-
- Run mvn Install <----- Probably can get rid of this
-
- Go to Services/Nutrition <----- Probably can get rid of this
-
- Run mvn Install <----- Probably can get rid of this
-
-3. Run bash start.sh
+4. Run bash start.sh
